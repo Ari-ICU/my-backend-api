@@ -9,6 +9,7 @@ const cartRoutes = require('./cart.route');
 const orderRoutes = require('./order.route');
 const reviewRoutes = require('./review.route');
 const wishlistRoutes = require('./wishlist.route');
+const uploadRoutes = require('./upload.route');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -18,5 +19,6 @@ router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/wishlist', wishlistRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;

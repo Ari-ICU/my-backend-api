@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File & Folder Upload</title>
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --border-dashed: #cbd5e1;
+      --success-color: #10b981;
+      --error-color: #ef4444;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .upload-container {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+      width: 100%;
+      max-width: 560px;
+      padding: 32px;
+      border: 1px solid var(--border-color);
+    }
+
+    .upload-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .upload-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .upload-header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Mode Tabs */
+    .tabs {
+      display: flex;
+      background-color: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border: none;
+      background: none;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background-color: #ffffff;
+      color: var(--primary-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Target Folder input */
+    .folder-input-group {
+      margin-bottom: 16px;
+    }
+
+    .folder-input-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .folder-input-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .folder-input-group input:focus {
+      border-color: var(--primary-color);
+    }
+
+    /* Drop Zone */
+    .drop-zone {
+      border: 2px dashed var(--border-dashed);
+      border-radius: var(--radius);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      background-color: #fcfcfd;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--primary-color);
+      background-color: #eef2ff;
+    }
+
+    .drop-zone svg {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+
+    .drop-zone p {
+      font-size: 0.95rem;
+      color: var(--text-main);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .drop-zone span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* File Preview List */
+    .file-list {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .file-preview-img {
+      width: 32px;
+      height: 32px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      font-weight: 500;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
+    }
+
+    .file-size {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .btn-remove:hover {
+      color: var(--error-color);
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      display: none;
+      margin-top: 18px;
+    }
+
+    .progress-bar-bg {
+      background-color: var(--border-color);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background-color: var(--primary-color);
+      transition: width 0.2s ease;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Upload Button */
+    .btn-upload {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-upload:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-upload:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Status Messages */
+    .status-message {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .status-message.success {
+      display: block;
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-message.error {
+      display: block;
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* Result Links */
+    .uploaded-links {
+      margin-top: 14px;
+      font-size: 0.8rem;
+      max-height: 140px;
+      overflow-y: auto;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: none;
+    }
+
+    .uploaded-links a {
+      color: var(--primary-color);
+      text-decoration: none;
+      display: block;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .uploaded-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="upload-container">
+    <div class="upload-header">
+      <h1>File & Folder Upload</h1>
+      <p>Upload individual files or an entire folder to the backend</p>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tabFiles">Files Upload</button>
+      <button class="tab-btn" id="tabFolder">Folder Upload</button>
+    </div>
+
+    <!-- Destination Folder Input -->
+    <div class="folder-input-group">
+      <label for="destinationFolder">Destination Subfolder (optional):</label>
+      <input type="text" id="destinationFolder" placeholder="e.g. products, images, or avatars">
+    </div>
+
+    <!-- Drag & Drop Zone -->
+    <div class="drop-zone" id="dropZone">
+      <svg id="dropIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+      </svg>
+      <p id="dropText">Click to browse or drop files here</p>
+      <span id="dropSubtext">Supports multiple files (up to 50MB each)</span>
+      
+      <!-- Input for files -->
+      <input type="file" id="fileInput" name="files" multiple>
+      
+      <!-- Input for entire folder -->
+      <input type="file" id="folderInput" name="files" webkitdirectory directory multiple>
+    </div>
+
+    <!-- Selected Files List -->
+    <div class="file-list" id="fileList"></div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+      <div class="progress-text">
+        <span id="progressStatus">Uploading...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+    </div>
+
+    <!-- Status Message -->
+    <div class="status-message" id="statusMessage"></div>
+
+    <!-- Uploaded links -->
+    <div class="uploaded-links" id="uploadedLinks"></div>
+
+    <!-- Upload Button -->
+    <button class="btn-upload" id="uploadBtn" disabled>Upload to Server</button>
+  </div>
+
+  <script>
+    const tabFiles = document.getElementById('tabFiles');
+    const tabFolder = document.getElementById('tabFolder');
+    const destinationFolder = document.getElementById('destinationFolder');
+    const dropZone = document.getElementById('dropZone');
+    const dropText = document.getElementById('dropText');
+    const dropSubtext = document.getElementById('dropSubtext');
+    const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const fileList = document.getElementById('fileList');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressStatus = document.getElementById('progressStatus');
+    const statusMessage = document.getElementById('statusMessage');
+    const uploadedLinks = document.getElementById('uploadedLinks');
+
+    let isFolderMode = false;
+    let selectedFiles = [];
+
+    // Switch to Files mode
+    tabFiles.addEventListener('click', () => {
+      isFolderMode = false;
+      tabFiles.classList.add('active');
+      tabFolder.classList.remove('active');
+      dropText.textContent = 'Click to browse or drop files here';
+      dropSubtext.textContent = 'Supports multiple files (up to 50MB each)';
+      selectedFiles = [];
+      renderFileList();
+    });
+
+    // Switch to Folder mode
+    tabFolder.addEventListener('click', () => {
+      isFolderMode = true;
+      tabFolder.classList.add('active');
+      tabFiles.classList.remove('active');
+      dropText.textContent = 'Click to choose an entire folder';
+      dropSubtext.textContent = 'Uploads all files inside the selected directory';
+      selectedFiles = [];
+      renderFileList();
+    });
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Trigger file or folder chooser
+    dropZone.addEventListener('click', () => {
+      if (isFolderMode) {
+        folderInput.click();
+      } else {
+        fileInput.click();
+      }
+    });
+
+    // Drag-and-drop events
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('drag-over');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = Array.from(e.dataTransfer.files);
+      handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(Array.from(e.target.files));
+      fileInput.value = '';
+    });
+
+    folderInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length > 0 && !destinationFolder.value.trim()) {
+        // Auto-fill folder name from root of selected folder
+        const firstPath = files[0].webkitRelativePath;
+        if (firstPath) {
+          const folderName = firstPath.split('/')[0];
+          destinationFolder.value = folderName;
+        }
+      }
+      handleFiles(files);
+      folderInput.value = '';
+    });
+
+    function handleFiles(files) {
+      if (!files.length) return;
+      selectedFiles = [...selectedFiles, ...files];
+      renderFileList();
+      hideStatus();
+      uploadedLinks.style.display = 'none';
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      renderFileList();
+    }
+
+    function renderFileList() {
+      fileList.innerHTML = '';
+      if (selectedFiles.length === 0) {
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      uploadBtn.disabled = false;
+
+      selectedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+
+        const info = document.createElement('div');
+        info.className = 'file-info';
+
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.className = 'file-preview-img';
+          img.src = URL.createObjectURL(file);
+          img.onload = () => URL.revokeObjectURL(img.src);
+          info.appendChild(img);
+        }
+
+        const details = document.createElement('div');
+        const name = document.createElement('div');
+        name.className = 'file-name';
+        name.textContent = file.webkitRelativePath || file.name;
+
+        const size = document.createElement('div');
+        size.className = 'file-size';
+        size.textContent = formatBytes(file.size);
+
+        details.appendChild(name);
+        details.appendChild(size);
+        info.appendChild(details);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-remove';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.title = 'Remove file';
+        removeBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeFile(index);
+        };
+
+        item.appendChild(info);
+        item.appendChild(removeBtn);
+        fileList.appendChild(item);
+      });
+    }
+
+    function showStatus(text, type) {
+      statusMessage.textContent = text;
+      statusMessage.className = `status-message ${type}`;
+    }
+
+    function hideStatus() {
+      statusMessage.style.display = 'none';
+      statusMessage.className = 'status-message';
+    }
+
+    uploadBtn.addEventListener('click', () => {
+      if (selectedFiles.length === 0) return;
+
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append('files', file);
+      });
+
+      const xhr = new XMLHttpRequest();
+
+      // Automatically determine backend host:
+      // If served directly from Express on port 4000, use relative path.
+      // If opened via Live Server (e.g. port 5500) or file://, target http://localhost:4000
+      const API_BASE = (window.location.protocol.startsWith('http') && window.location.port === '4000')
+        ? ''
+        : 'http://localhost:4000';
+
+      // Configure upload endpoint with destination folder if present
+      const targetSubfolder = destinationFolder.value.trim();
+      const endpoint = isFolderMode ? '/api/v1/upload/folder' : '/api/v1/upload/files';
+      const pathWithQuery = targetSubfolder 
+        ? `${endpoint}?folder=${encodeURIComponent(targetSubfolder)}` 
+        : endpoint;
+      const url = `${API_BASE}${pathWithQuery}`;
+
+      xhr.open('POST', url, true);
+
+      // Track progress
+      progressContainer.style.display = 'block';
+      progressBarFill.style.width = '0%';
+      progressPercent.textContent = '0%';
+      progressStatus.textContent = 'Uploading...';
+      uploadBtn.disabled = true;
+      hideStatus();
+      uploadedLinks.style.display = 'none';
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressBarFill.style.width = `${percent}%`;
+          progressPercent.textContent = `${percent}%`;
+        }
+      });
+
+      xhr.onload = () => {
+        uploadBtn.disabled = false;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const response = JSON.parse(xhr.responseText || '{}');
+          showStatus(response.message || 'Files uploaded successfully!', 'success');
+          progressStatus.textContent = 'Completed!';
+
+          // Display uploaded file links
+          if (response.data && response.data.length > 0) {
+            uploadedLinks.innerHTML = '<strong>Uploaded Files:</strong>';
+            response.data.forEach(item => {
+              const link = document.createElement('a');
+              link.href = item.url;
+              link.target = '_blank';
+              link.textContent = `🔗 ${item.original_name} (${item.path})`;
+              uploadedLinks.appendChild(link);
+            });
+            uploadedLinks.style.display = 'block';
+          }
+
+          selectedFiles = [];
+          renderFileList();
+        } else {
+          showStatus(`Upload failed: ${xhr.status} ${xhr.statusText}`, 'error');
+          progressStatus.textContent = 'Failed';
+        }
+      };
+
+      xhr.onerror = () => {
+        uploadBtn.disabled = false;
+        showStatus('Network error or server unavailable.', 'error');
+        progressStatus.textContent = 'Error';
+      };
+
+      xhr.send(formData);
+    });
+  </script>
+</body>
+</html>

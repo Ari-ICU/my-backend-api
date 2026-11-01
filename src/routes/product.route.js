@@ -3,10 +3,11 @@ const router = express.Router();
 const productController = require('../controllers/product.controller');
 const validate = require('../validations/validate');
 const { createProductSchema, updateProductSchema, productImageSchema } = require('../validations/product.validation');
+const { productLimiter } = require('../middlewares/rate-limiting');
 
 router.route('/')
   .get(productController.getAllProducts)
-  .post(validate(createProductSchema), productController.createProduct);
+  .post(validate(createProductSchema), productController.createProduct, productLimiter);
 
 router.route('/:id')
   .get(productController.getProductById)
